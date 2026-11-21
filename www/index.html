@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1F3864">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Sports Plus+</title>
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}[hidden]{display:none!important}
+
+/* Scorekeeper for match day: a sport row, an age row, one column of cards, and a bottom tab bar. Tables, brackets and standings all read from one saved store. Look kept from the original football tracker. */
+:root{--bg:#f5f6f8;--c:#fff;--t:#1b2433;--m:#6b7587;--b:#d9dde5;--nv:#1F3864;--ok:#d6f0dc;--good:#2e8b4a;--warn:#b4531a;--bad:#c0392b;--gold:#fff1c2;--girls:#e58aa8;--boys:#5b9be0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141b;--c:#1a2029;--t:#e8ecf2;--m:#98a2b3;--b:#2c3542;--nv:#7aa2e6;--ok:#1f3d2a;--good:#5fc17f;--warn:#e8934f;--bad:#ef7b6e;--gold:#3d3416;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10141b;--c:#1a2029;--t:#e8ecf2;--m:#98a2b3;--b:#2c3542;--nv:#7aa2e6;--ok:#1f3d2a;--good:#5fc17f;--warn:#e8934f;--bad:#ef7b6e;--gold:#3d3416;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:680px;background:var(--bg);color:var(--t);font:15px Arial,Helvetica,sans-serif;padding-block:0 78px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:17px;margin:12px 0 8px;color:var(--nv)}h2{font-size:15px;margin:16px 0 6px;color:var(--nv)}
+.prog{font-size:12px;font-weight:normal;color:var(--m);margin-left:6px}
+.ages{display:flex;gap:8px;margin-bottom:8px}.ages button{flex:1;padding:10px 4px;border:1px solid var(--b);background:var(--c);color:var(--t);border-radius:10px;font:bold 15px Arial}.ages button.on{background:var(--nv);color:var(--bg);border-color:var(--nv)}
+.ages.sp{gap:4px}.ages.sp button{font-size:11px;padding:10px 2px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:10px;border-left:6px solid var(--girls)}.card.Boys{border-left-color:var(--boys)}
+.meta{font-size:12px;color:var(--m);margin-bottom:6px}.row{display:flex;align-items:center;gap:6px}.tm{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:bold;font-size:14px}.tm.r{text-align:right}.tm.tbd{color:var(--m);font-weight:normal;font-style:italic}
+.set{justify-content:center;margin-top:6px}.set .cap{width:44px;margin:0}
+input,select{font:16px Arial;padding:8px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);width:100%}input:disabled{opacity:.45}.row input,.pen input{width:52px;text-align:center}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--nv);outline-offset:2px}
+.pen{margin-top:8px;font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.st{font-size:12px;margin-top:6px;color:var(--m);min-height:14px}.st.ok{color:var(--good)}.st.w{color:var(--warn)}
+.stale{margin-top:6px;font-size:12px;color:var(--warn);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tw{overflow-x:auto;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;background:var(--c);font-size:13px}th,td{padding:6px 3px;text-align:center;border-bottom:1px solid var(--b)}th{background:var(--nv);color:var(--bg)}td:nth-child(2),th:nth-child(2){text-align:left}tr.q td{background:var(--ok)}
+.cap{font-size:12px;color:var(--m);margin:2px 0 8px}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--c);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+.nav button{flex:1;padding:12px 1px;border:0;background:none;color:var(--m);font:bold 12px Arial}.nav button.on{color:var(--nv)}
+.f{display:grid;gap:8px;background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:10px}
+.btn{padding:11px;border:0;border-radius:10px;background:var(--nv);color:var(--bg);font:bold 15px Arial;width:100%;margin-top:6px}
+.sm{padding:8px 10px;border:1px solid var(--nv);border-radius:8px;background:none;color:var(--nv);font:bold 12px Arial}.sm.on{background:var(--nv);color:var(--bg)}
+.sc{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--b);font-size:14px}.sc>span:first-child{min-width:0;overflow-wrap:anywhere}
+.del{border:0;background:none;color:var(--bad);font-size:20px;min-width:34px;min-height:34px}
+.ic{min-width:38px;min-height:38px;padding:0 8px;border:1px solid var(--b);border-radius:8px;background:none;color:var(--t);font:bold 15px Arial}.ic.bad{color:var(--bad)}
+.acts{display:flex;gap:6px;flex-shrink:0}
+.tr{display:flex;align-items:center;gap:8px}.tr input{flex:1;min-width:0}.tr .cap{margin:0;white-space:nowrap}
+.tr select{flex:1;min-width:0}
+textarea{width:100%;height:110px;font:12px Arial;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:8px}
+.tie{background:var(--c);border:1px solid var(--warn);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:13px;line-height:1.5}.tie .sm{margin:4px 6px 0 0}
+.champ{background:var(--gold);border:1px solid var(--b);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:14px;line-height:1.5}
+.note{border:1px solid var(--warn);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:13px;color:var(--warn)}
+.ar{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:8px;margin-bottom:8px}
+.l1,.l2{display:flex;align-items:center;gap:8px}.l2{margin-top:6px}.l1 input{flex:1;min-width:0}.l2 select{flex:1;min-width:0}.l2 input{width:100px}
+.rank{min-width:28px;text-align:center;font-weight:bold;color:var(--nv)}.l2 .cap{margin:0;width:64px;text-align:right}
+[hidden]{display:none!important}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.chip{font-size:11px;border:1px solid var(--b);border-radius:999px;padding:2px 8px;color:var(--m)}
+.pl{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin-bottom:8px;border-left:6px solid var(--girls)}.pl.Boys{border-left-color:var(--boys)}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.opts label{display:flex;gap:6px;align-items:center;font-size:13px}.opts input{width:auto}
+.f label.cap{margin:4px 0 0}
+details.tm2{background:var(--c);border:1px solid var(--b);border-radius:10px;padding:6px 10px;margin-bottom:8px}details.tm2 summary{cursor:pointer;padding:4px 0;font-size:14px}
+.note.ok{border-color:var(--good);color:var(--good)}
+.frm{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:10px;margin:10px 0}.frm .hd{text-align:center;font-size:12px;line-height:1.6;margin-bottom:8px}.frm .hd b{display:block;font-size:14px}
+.frm .ln{font-size:13px;line-height:1.7}
+.chip.aw{border-color:var(--warn);color:var(--warn);background:var(--gold)}
+</style>
+</head>
+<body>
+<h1 id="title"></h1><div class="ages sp" id="sports"></div><div class="ages" id="ages"></div><div id="v"></div>
+<div class="nav" id="nav"></div>
+<script>
+/*LOGIC*/
+const DEF={"U13": [["Girls", "A", "Aninangya Meth", "Woraso Presby", 0], ["Boys", "B", "Bodomase D/A", "Bodomase Meth", 1], ["Girls", "B", "Woraso D/A", "Bodomase Presby", 1], ["Boys", "A", "Woraso D/A", "Bodomase Presby", 0], ["Girls", "B", "Bodomase Meth", "Bodomase D/A", 1], ["Boys", "A", "Woraso D/A", "Bodomase R/C", 0], ["Girls", "B", "Bodomase Presby", "Bodomase Meth", 2], ["Boys", "B", "Aninangya Meth", "Woraso Presby", 1], ["Girls", "A", "Bodomase R/C", "Woraso Presby", 0], ["Boys", "B", "Aninangya Meth", "Bodomase Meth", 2], ["Girls", "B", "Woraso D/A", "Bodomase D/A", 2], ["Boys", "A", "Bodomase R/C", "Bodomase Presby", 0], ["Girls", "B", "Woraso D/A", "Bodomase Meth", 3], ["Boys", "B", "Woraso Presby", "Bodomase D/A", 2], ["Girls", "A", "Aninangya Meth", "Bodomase R/C", 0], ["Boys", "B", "Bodomase Meth", "Woraso Presby", 3], ["Girls", "B", "Bodomase D/A", "Bodomase Presby", 3], ["Boys", "B", "Aninangya Meth", "Bodomase D/A", 3]], "U15": [["Girls", "A", "Bodomase R/C", "Bodomase Meth", 0], ["Boys", "B", "Aninangya Meth", "Woraso D/A", 1], ["Girls", "B", "Bodomase D/A", "Bodomase Presby", 1], ["Boys", "B", "Bodomase D/A", "Bodomase R/C", 1], ["Girls", "B", "Woraso Presby", "Aninangya Meth", 1], ["Boys", "B", "Woraso D/A", "Bodomase D/A", 2], ["Girls", "B", "Bodomase Presby", "Woraso Presby", 2], ["Boys", "A", "Bodomase Presby", "Woraso Presby", 0], ["Girls", "B", "Bodomase D/A", "Aninangya Meth", 2], ["Boys", "A", "Bodomase Presby", "Bodomase Meth", 0], ["Girls", "B", "Bodomase D/A", "Woraso Presby", 3], ["Boys", "B", "Aninangya Meth", "Bodomase R/C", 2], ["Girls", "A", "Woraso D/A", "Bodomase Meth", 0], ["Boys", "B", "Aninangya Meth", "Bodomase D/A", 3], ["Girls", "A", "Bodomase R/C", "Woraso D/A", 0], ["Boys", "B", "Bodomase R/C", "Woraso D/A", 3], ["Girls", "B", "Aninangya Meth", "Bodomase Presby", 3], ["Boys", "A", "Bodomase Meth", "Woraso Presby", 0]]};
+const NAME0="Sports Plus+",PTS0=[10,8,6,5,4,3,2,1],ORG0="Sekyere Kumawu District Sports Federation";
+const SP={football:{label:"Football",kind:"goals",scorers:1,pen:"Penalty shootout"},handball:{label:"Handball",kind:"goals",scorers:1,pen:"7m throws"},volleyball:{label:"Volleyball",kind:"sets"},athletics:{label:"Athletics",kind:"track"}};
+const SPK=Object.keys(SP),AGES=["U13","U15"],ENT=SPK.flatMap(s=>AGES.map(g=>s+":"+g)),REGL="Register";
+const KN={SF1:"Semi-final 1",SF2:"Semi-final 2",TP:"Third place",F:"Final"},KO_ORDER=["SF1","SF2","TP","F"],CATS=["Girls","Boys"],GRPS=["A","B"];
+const sportOf=a=>a.split(":")[0],ageOf=a=>a.split(":")[1],kindOf=a=>SP[sportOf(a)].kind;
+let S={};try{S=JSON.parse(localStorage.getItem("sportsplus1"))||{}}catch(e){S={}}
+function norm(d){if(!d||typeof d!="object")d={};
+ d.name=typeof d.name=="string"&&d.name.trim()&&!["Circuit Sports Soccer","Circuit Sports","Sports Plus"].includes(d.name)?d.name.trim():NAME0;
+ d.org=typeof d.org=="string"&&d.org.trim()?d.org.trim():ORG0;
+ if(!d.regmeta||typeof d.regmeta!="object")d.regmeta={};d.regmeta.level=d.regmeta.level=="Inter-school"?"Inter-school":"Inter-circuit";d.regmeta.date=typeof d.regmeta.date=="string"?d.regmeta.date:"";
+ d.players=Array.isArray(d.players)?d.players.filter(p=>p&&typeof p=="object"&&p.n).map(p=>({id:+p.id,n:String(p.n),sex:p.sex=="Boys"?"Boys":"Girls",dob:p.dob||"",cls:p.cls||"",nhis:p.nhis||"",team:String(p.team||""),en:Array.isArray(p.en)?p.en.filter(k=>ENT.includes(k)):[]})):[];
+ {const ids=new Set();d.players.forEach(p=>{if(!Number.isFinite(p.id)||ids.has(p.id))p.id=Math.max(-1,...d.players.map(q=>q.id).filter(Number.isFinite))+1;ids.add(p.id)})}
+ d.awards=Array.isArray(d.awards)?d.awards.filter(w=>w&&ENT.includes(w.a)&&CATS.includes(w.c)&&w.t).map(w=>({id:+w.id,a:w.a,c:w.c,t:String(w.t),pid:w.pid!=null&&w.pid!==""&&Number.isFinite(+w.pid)?+w.pid:null,who:String(w.who||""),team:String(w.team||"")})):[];
+ {const ids=new Set();d.awards.forEach(w=>{if(!Number.isFinite(w.id)||ids.has(w.id))w.id=Math.max(-1,...d.awards.map(q=>q.id).filter(Number.isFinite))+1;ids.add(w.id)})}
+ d.pts=Array.isArray(d.pts)&&d.pts.length&&d.pts.every(x=>typeof x=="number"&&x>=0)?d.pts:PTS0.slice();
+ AGES.forEach(ag=>{if(d[ag]){if(!d["football:"+ag])d["football:"+ag]=d[ag];delete d[ag]}});
+ SPK.forEach(sp=>AGES.forEach(ag=>{const a=sp+":"+ag,x=d[a]=d[a]&&typeof d[a]=="object"?d[a]:{};
+  if(SP[sp].kind=="track"){x.schools=Array.isArray(x.schools)?x.schools:[];x.events=Array.isArray(x.events)?x.events:[];x.res=x.res||{};return}
+  x.r=x.r||{};x.s=Array.isArray(x.s)?x.s:[];x.k=x.k||{};x.tb=x.tb||{};
+  if(!Array.isArray(x.fx))x.fx=sp=="football"?DEF[ag].map((f,i)=>({id:i,c:f[0],g:f[1],h:f[2],aw:f[3],rd:f[4]})):[];
+  if(!x.teams||typeof x.teams!="object")x.teams={};
+  x.fx.forEach(f=>["h","aw"].forEach(p=>{const k=f.c+"|"+f.g,L=x.teams[k]=x.teams[k]||[];if(!L.includes(f[p]))L.push(f[p])}))}));return d}
+S=norm(S);
+const save=()=>{try{localStorage.setItem("sportsplus1",JSON.stringify(S))}catch(e){}};
+const num=v=>(v===""||v==null||isNaN(v))?null:+v;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clean=n=>String(n||"").trim().replace(/\s+/g," ");
+const fx=a=>S[a].fx,fxById=(a,id)=>fx(a).find(f=>f.id===id),pos=(a,id)=>fx(a).findIndex(f=>f.id===id)+1;
+const teamsOf=(a,c,g)=>S[a].teams[c+"|"+g]||(S[a].teams[c+"|"+g]=[]);
+const hasTeam=(a,c,n)=>GRPS.some(g=>teamsOf(a,c,g).includes(n));
+const nameErr=(a,c,n)=>!n?"Type a team name first.":n.includes("|")?'Team names cannot contain "|".':hasTeam(a,c,n)?n+" is already in "+ageOf(a)+" "+c+".":"";
+/* results: goals sports (football, handball) and sets sports (volleyball) */
+function outG(arr){const [h,g,p,q]=(arr||[]).map(x=>num(x));if(h==null||g==null)return null;
+ if(h===g){if(p==null||q==null||p===q)return{pend:1};return{h,g,w:p>q?"HP":"AP"}}
+ return{h,g,w:h>g?"H":"A"}}
+function outV(arr){const n=(arr||[]).map(v=>num(v));let hs=0,as=0,ph=0,pa=0;const sets=[];
+ for(let i=0;i<3&&hs<2&&as<2;i++){const h=n[2*i],g=n[2*i+1];if(h==null||g==null)break;if(h===g)return{pend:1};sets.push(h+"-"+g);ph+=h;pa+=g;if(h>g)hs++;else as++}
+ return hs<2&&as<2?null:{h:hs,g:as,ph,pa,w:hs>as?"H":"A",sets}}
+const outcome=(sp,arr)=>SP[sp].kind=="sets"?outV(arr):outG(arr);
+function scoreStr(sp,arr){const x=outcome(sp,arr);if(!x||x.pend)return"";
+ if(SP[sp].kind=="sets")return x.h+"-"+x.g+" ("+x.sets.join(", ")+")";
+ return x.h+"-"+x.g+(x.w.length>1?" ("+num(arr[2])+"-"+num(arr[3])+" "+(sp=="handball"?"7m":"pens")+")":"")}
+const res=(a,id)=>outcome(sportOf(a),S[a].r[id]);
+const PT3={H:[3,0],A:[0,3],HP:[2,1],AP:[1,2]},PT2={H:[2,0],A:[0,2]};
+const ptsFor=sp=>SP[sp].kind=="sets"?PT2:PT3;
+const same=(a,x,y)=>x.Pts==y.Pts&&x.GD==y.GD&&(kindOf(a)=="sets"?x.PF-x.PA==y.PF-y.PA:x.GF==y.GF);
+function table(a,cat,gr){const sp=sportOf(a),V=SP[sp].kind=="sets",P=ptsFor(sp),T={},L=[],pr=S[a].tb[cat+"|"+gr]||[];
+ teamsOf(a,cat,gr).forEach(t=>{T[t]={t,P:0,W:0,PW:0,PL:0,L:0,GF:0,GA:0,PF:0,PA:0,Pts:0};L.push(T[t])});
+ fx(a).forEach(f=>{if(f.c!=cat||f.g!=gr)return;const r=res(a,f.id);if(!r||r.pend)return;const H=T[f.h],A=T[f.aw],p=P[r.w];if(!H||!A)return;
+  H.P++;A.P++;H.GF+=r.h;H.GA+=r.g;A.GF+=r.g;A.GA+=r.h;H.Pts+=p[0];A.Pts+=p[1];
+  if(V){H.PF+=r.ph;H.PA+=r.pa;A.PF+=r.pa;A.PA+=r.ph}
+  if(r.w=="H"){H.W++;A.L++}else if(r.w=="A"){A.W++;H.L++}else if(r.w=="HP"){H.PW++;A.PL++}else{A.PW++;H.PL++}});
+ const rk=n=>{const k=pr.indexOf(n);return k<0?1e3:k};
+ return L.map((x,i)=>({...x,GD:x.GF-x.GA,i})).sort((x,y)=>y.Pts-x.Pts||y.GD-x.GD||(V?(y.PF-y.PA)-(x.PF-x.PA):y.GF-x.GF)||rk(x.t)-rk(y.t)||x.i-y.i)}
+function groupProg(a,cat,gr){let n=0,d=0;fx(a).forEach(f=>{if(f.c==cat&&f.g==gr){n++;const r=res(a,f.id);if(r&&!r.pend)d++}});return[d,n]}
+const groupDone=(a,cat,gr)=>{const[d,n]=groupProg(a,cat,gr);return n>0&&d==n};
+function ties(a,cat,gr){const o=[];if(!groupDone(a,cat,gr))return o;const R=table(a,cat,gr);
+ for(let i=0;i<2&&i+1<R.length;i++)if(same(a,R[i],R[i+1]))o.push({hi:R[i].t,lo:R[i+1].t,pos:i+1});return o}
+function ko(a,cat){const sp=sportOf(a);
+ const ready=groupDone(a,cat,"A")&&groupDone(a,cat,"B"),A=table(a,cat,"A"),B=table(a,cat,"B"),pick=(L,i)=>ready&&L[i]?L[i].t:null;
+ const M={SF1:{h:pick(A,0),g:pick(B,1),hl:"Group A 1st",gl:"Group B 2nd"},SF2:{h:pick(B,0),g:pick(A,1),hl:"Group B 1st",gl:"Group A 2nd"}};
+ const rec=k=>S[a].k[cat+"|"+k],key=k=>M[k].h+"|"+M[k].g;
+ const out=k=>{const t=M[k];if(!t.h||!t.g)return null;const r=rec(k);if(!r||r.t!=key(k))return null;const o=outcome(sp,r.r);return o&&!o.pend?o:null};
+ const win=k=>{const o=out(k);return o?(o.w[0]=="H"?M[k].h:M[k].g):null},lose=k=>{const o=out(k);return o?(o.w[0]=="H"?M[k].g:M[k].h):null};
+ M.F={h:win("SF1"),g:win("SF2"),hl:"Winner SF1",gl:"Winner SF2"};M.TP={h:lose("SF1"),g:lose("SF2"),hl:"Loser SF1",gl:"Loser SF2"};
+ KO_ORDER.forEach(k=>{const t=M[k],r=rec(k),good=!!r&&!!t.h&&!!t.g&&r.t==key(k);t.rec=good?r:null;t.stale=!!r&&!good});
+ return{ready,M,out,win,lose}}
+const logged=(a,m)=>S[a].s.filter(x=>x.m===m).reduce((n,x)=>n+x.g,0);
+const mCat=(a,m)=>typeof m=="number"?(fxById(a,m)||{}).c:String(m).split("|")[0];
+const mLabel=(a,m)=>{if(typeof m=="number")return"#"+(pos(a,m)||"?");const[c,k]=String(m).split("|");return c+" "+(k=="TP"?"3rd place":k)};
+const mParse=v=>/^\d+$/.test(v)?+v:v;
+const head=(a,w)=>`${S.name.toUpperCase()} – ${SP[sportOf(a)].label.toUpperCase()} ${ageOf(a)} ${w}\n`;
+function koText(a){const sp=sportOf(a);let o=head(a,"KNOCKOUTS");CATS.forEach(c=>{const B=ko(a,c);o+=`\n${c}\n`;
+ KO_ORDER.forEach(k=>{const t=B.M[k],x=t.rec?scoreStr(sp,t.rec.r):"";o+=`${KN[k]}: ${t.h||t.hl} ${x||"v"} ${t.g||t.gl}\n`});
+ const ch=B.win("F");if(ch)o+=`Champions: ${ch}\n`});return o}
+/* team sports setup: every change returns "" or a message for the organiser */
+const nextId=a=>Math.max(-1,...fx(a).map(f=>f.id))+1;
+function dropFx(a,id){S[a].fx=fx(a).filter(f=>f.id!==id);delete S[a].r[id];S[a].s=S[a].s.filter(x=>x.m!==id)}
+function addTeam(a,c,g,raw){const n=clean(raw),e=nameErr(a,c,n);if(e)return e;teamsOf(a,c,g).push(n);return""}
+function delTeam(a,c,g,n){fx(a).filter(f=>f.c==c&&f.g==g&&(f.h==n||f.aw==n)).forEach(f=>dropFx(a,f.id));
+ S[a].teams[c+"|"+g]=teamsOf(a,c,g).filter(t=>t!=n);S[a].s=S[a].s.filter(x=>!(x.t==n&&mCat(a,x.m)==c));
+ const tb=S[a].tb[c+"|"+g];if(tb)S[a].tb[c+"|"+g]=tb.filter(t=>t!=n)}
+function renameTeam(a,c,g,old,raw){const n=clean(raw);if(n==old)return"";const e=nameErr(a,c,n);if(e)return e;
+ const L=teamsOf(a,c,g);L[L.indexOf(old)]=n;fx(a).forEach(f=>{if(f.c==c){if(f.h==old)f.h=n;if(f.aw==old)f.aw=n}});
+ const tb=S[a].tb[c+"|"+g];if(tb)S[a].tb[c+"|"+g]=tb.map(t=>t==old?n:t);
+ Object.keys(S[a].k).forEach(k=>{if(k.split("|")[0]==c){const r=S[a].k[k];r.t=r.t.split("|").map(t=>t==old?n:t).join("|")}});
+ S[a].s.forEach(x=>{if(x.t==old&&mCat(a,x.m)==c)x.t=n});S.players.forEach(p=>{if(p.sex==c&&p.en.includes(a)&&teamKey(p.team)==teamKey(old))p.team=n});return""}
+function rr(teams){const t=teams.slice();if(t.length%2)t.push(null);const n=t.length,out=[];
+ for(let r=0;r<n-1;r++){for(let i=0;i<n/2;i++){const x=t[i],y=t[n-1-i];if(x&&y)out.push({h:r%2?y:x,aw:r%2?x:y,rd:r+1})}t.splice(1,0,t.pop())}return out}
+function genFx(a,c,g){fx(a).filter(f=>f.c==c&&f.g==g).forEach(f=>dropFx(a,f.id));let id=nextId(a);
+ rr(teamsOf(a,c,g)).forEach(m=>fx(a).push({id:id++,c,g,h:m.h,aw:m.aw,rd:m.rd}))}
+function moveFx(a,id,d){const L=fx(a),i=L.findIndex(f=>f.id===id),j=i+d;if(i<0||j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]]}
+function sortFx(a){fx(a).sort((x,y)=>(x.rd||0)-(y.rd||0)||CATS.indexOf(x.c)-CATS.indexOf(y.c)||x.g.localeCompare(y.g))}
+function addFx(a,c,g,h,aw,rd){if(!h||!aw)return"Pick both teams.";if(h==aw)return"A team cannot play itself.";
+ const T=teamsOf(a,c,g);if(!T.includes(h)||!T.includes(aw))return"Both teams must be in the same group.";
+ fx(a).push({id:nextId(a),c,g,h,aw,rd:rd==null?0:rd});return""}
+/* athletics: events ranked by mark, points to schools by place */
+const aEv=(a,id)=>S[a].events.find(e=>e.id===id);
+function parseMark(s){s=String(s==null?"":s).trim().replace(",",".");if(!s)return null;
+ if(s.includes(":")){const p=s.split(":");if(p.length!=2||!p[0]||!p[1])return null;const m=+p[0],sec=+p[1];return isNaN(m)||isNaN(sec)||m<0||sec<0||sec>=60?null:m*60+sec}
+ const v=+s;return isNaN(v)||v<=0?null:v}
+function rankEvent(a,ev){const rows=(S[a].res[ev.id]||[]).map((r,i)=>({i,r,v:parseMark(r.mk)})).filter(x=>x.v!=null);
+ rows.sort((x,y)=>ev.t=="time"?x.v-y.v:y.v-x.v);let place=0,prev=null;const out={};
+ rows.forEach((x,k)=>{if(prev===null||x.v!==prev){place=k+1;prev=x.v}out[x.i]={place,pts:S.pts[place-1]||0}});return out}
+function standings(a,cat){const D=S[a],T={};D.schools.forEach(s=>T[s]={t:s,Pts:0,G:0,Sv:0,B:0});
+ D.events.filter(e=>!cat||e.c==cat).forEach(ev=>{const rk=rankEvent(a,ev),rows=D.res[ev.id]||[];
+  Object.keys(rk).forEach(i=>{const r=rows[i],x=rk[i];if(!r.sch||!T[r.sch])return;const t=T[r.sch];t.Pts+=x.pts;if(x.place==1)t.G++;else if(x.place==2)t.Sv++;else if(x.place==3)t.B++})});
+ return Object.values(T).sort((x,y)=>y.Pts-x.Pts||y.G-x.G||y.Sv-x.Sv||y.B-x.B||x.t.localeCompare(y.t))}
+function evProg(a,cat){const L=S[a].events.filter(e=>!cat||e.c==cat);return[L.filter(e=>Object.keys(rankEvent(a,e)).length>0).length,L.length]}
+function aText(a){let o=head(a,"STANDINGS");[...CATS,null].forEach(c=>{o+=`\n${c||"Girls and Boys combined"}\n`;standings(a,c).forEach((x,i)=>{o+=`${i+1}. ${x.t} ${x.Pts} pts (${x.G}-${x.Sv}-${x.B})\n`})});return o}
+function aAddSchool(a,raw){const n=clean(raw);if(!n)return"Type a school name first.";if(S[a].schools.includes(n))return n+" is already listed.";S[a].schools.push(n);return""}
+function aRenSchool(a,old,raw){const n=clean(raw);if(n==old)return"";if(!n)return"A school name cannot be empty.";if(S[a].schools.includes(n))return n+" is already listed.";
+ S[a].schools[S[a].schools.indexOf(old)]=n;Object.values(S[a].res).forEach(rows=>rows.forEach(r=>{if(r.sch==old)r.sch=n}));S.players.forEach(p=>{if(p.en.includes(a)&&teamKey(p.team)==teamKey(old))p.team=n});return""}
+function aDelSchool(a,n){S[a].schools=S[a].schools.filter(s=>s!=n);Object.values(S[a].res).forEach(rows=>rows.forEach(r=>{if(r.sch==n)r.sch=""}))}
+const aNextId=a=>Math.max(-1,...S[a].events.map(e=>e.id))+1;
+function aAddEvent(a,name,c,t){const n=clean(name);if(!n)return"Type an event name first.";if(S[a].events.some(e=>e.n==n&&e.c==c))return n+" already exists for "+c+".";S[a].events.push({id:aNextId(a),n,c,t});return""}
+function aRenEvent(a,id,raw){const n=clean(raw),e=aEv(a,id);if(!e||n==e.n)return"";if(!n)return"An event name cannot be empty.";if(S[a].events.some(x=>x.id!==id&&x.n==n&&x.c==e.c))return n+" already exists for "+e.c+".";e.n=n;return""}
+function aDelEvent(a,id){S[a].events=S[a].events.filter(e=>e.id!==id);delete S[a].res[id]}
+function aStdEvents(a){const T=["100m","200m","400m","800m","4x100m Relay"],M=["Long Jump","High Jump","Shot Put"];
+ CATS.forEach(c=>{T.forEach(n=>aAddEvent(a,n,c,"time"));M.forEach(n=>aAddEvent(a,n,c,"mark"))})}
+function setPts(raw){const L=String(raw).split(/[ ,;]+/).filter(Boolean).map(Number);if(!L.length||L.some(x=>isNaN(x)||x<0))return"Type points like 10, 8, 6, 5, 4, 3, 2, 1.";S.pts=L;return""}
+function srcSports(a){return SPK.filter(sp=>sp!=sportOf(a)&&SP[sp].kind!="track"&&Object.values(S[sp+":"+ageOf(a)].teams).some(L=>L.length))}
+function copyTeams(a,from){const src=S[from+":"+ageOf(a)];if(!src)return;
+ if(kindOf(a)=="track"){const set=[];Object.values(src.teams).forEach(L=>L.forEach(t=>{if(!set.includes(t))set.push(t)}));S[a].schools=set;return}
+ S[a].teams=JSON.parse(JSON.stringify(src.teams))}
+/* registration: one record per player, with the sport and age groups they take part in */
+const teamKey=s=>clean(s).toLowerCase();
+const isoOk=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||""))return false;const d=new Date(s+"T00:00:00Z");return !isNaN(d)&&d.toISOString().slice(0,10)==s};
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function ageOn(dob,ref){if(!isoOk(dob))return null;const r=isoOk(ref)?ref:todayISO();let y=+r.slice(0,4)-+dob.slice(0,4);if(r.slice(5)<dob.slice(5))y--;return y<0?null:y}
+const fmtD=s=>isoOk(s)?s.slice(8)+"/"+s.slice(5,7)+"/"+s.slice(0,4):"";
+const entLabel=k=>SP[sportOf(k)].label+" "+ageOf(k);
+function knownTeams(){const set=[],add=t=>{if(t&&!set.some(x=>teamKey(x)==teamKey(t)))set.push(t)};
+ SPK.forEach(sp=>AGES.forEach(ag=>{const x=S[sp+":"+ag];if(SP[sp].kind=="track")x.schools.forEach(add);else Object.values(x.teams).forEach(L=>L.forEach(add))}));
+ S.players.forEach(p=>add(p.team));return set.sort((x,y)=>x.localeCompare(y))}
+const nextPid=()=>Math.max(-1,...S.players.map(p=>p.id))+1;
+function checkPlayer(p,skipId){const n=clean(p.n),team=clean(p.team);
+ if(!n)return"Type the player's name.";if(!team)return"Pick or type the team, school or circuit.";
+ if(!CATS.includes(p.sex))return"Choose Girls or Boys.";
+ if(p.dob&&!isoOk(p.dob))return"The date of birth is not a valid date.";
+ if(!p.en||!p.en.some(k=>ENT.includes(k)))return"Tick at least one sport and age group.";
+ const d=S.players.find(x=>x.id!==skipId&&teamKey(x.n)==teamKey(n)&&teamKey(x.team)==teamKey(team)&&(x.dob||"")==(p.dob||""));
+ return d?n+" is already registered for "+d.team+(p.dob?" with that date of birth.":". Add a date of birth if these are two different players."):""}
+function savePlayer(p,id){const e=checkPlayer(p,id);if(e)return e;
+ const t=clean(p.team),canon=knownTeams().find(x=>teamKey(x)==teamKey(t))||t;
+ const rec={id:id==null?nextPid():id,n:clean(p.n),sex:p.sex,dob:p.dob||"",cls:clean(p.cls),nhis:clean(p.nhis),team:canon,en:ENT.filter(k=>p.en.includes(k))};
+ if(id==null)S.players.push(rec);else{const i=S.players.findIndex(x=>x.id===id);if(i<0)return"That player no longer exists.";S.players[i]=rec}return""}
+const byName=(x,y)=>x.n.localeCompare(y.n);
+function roster(a,cat){const track=kindOf(a)=="track",teams=track?S[a].schools.map(t=>({team:t,g:""})):GRPS.flatMap(g=>teamsOf(a,cat,g).map(t=>({team:t,g})));
+ const ps=S.players.filter(p=>p.sex==cat&&p.en.includes(a)),by=n=>ps.filter(p=>teamKey(p.team)==teamKey(n)).sort(byName);
+ const out=teams.map(x=>({...x,list:by(x.team),listed:true})),seen=new Set(teams.map(x=>teamKey(x.team)));
+ [...new Set(ps.map(p=>teamKey(p.team)))].filter(k=>!seen.has(k)).forEach(k=>{const l=ps.filter(p=>teamKey(p.team)==k).sort(byName);out.push({team:l[0].team,g:"",list:l,listed:false})});return out}
+function rosterText(a){let o=head(a,"REGISTERED PLAYERS");CATS.forEach(c=>{o+=`\n${c}\n`;roster(a,c).forEach(x=>{if(!x.list.length)return;o+=`${x.team}${x.g?" (Group "+x.g+")":""} – ${x.list.length}\n`;x.list.forEach((p,i)=>{o+=`  ${i+1}. ${p.n}${p.cls?" ("+p.cls+")":""}\n`})})});return o}
+const formRows=(team,a,cat)=>S.players.filter(p=>teamKey(p.team)==teamKey(team)&&p.sex==cat&&p.en.includes(a)).sort(byName);
+function formText(team,a,cat){const m=S.regmeta,rows=formRows(team,a,cat);
+ let o=`GHANA EDUCATION SERVICE\n${S.org.toUpperCase()}\nREGISTRATION FORM\n${m.level}${m.date?" · Date: "+fmtD(m.date):""}\nEvent: ${entLabel(a)} ${cat}\nTeam/School/Circuit: ${team}\n\n`;
+ rows.forEach((p,i)=>{const g=ageOn(p.dob,m.date);o+=`${i+1}. ${p.n} | DOB ${fmtD(p.dob)||"-"} | Age ${g==null?"-":g} | ${p.cls||"-"} | NHIS ${p.nhis||"-"}\n`});return o}
+/* awards: one record per winner; a winner who is a registered player stays linked to that player */
+const AWT={football:["Most Valuable Player","Top Scorer","Best Goalkeeper","Best Defender","Best Midfielder","Best Attacker","Fair Play"],handball:["Most Valuable Player","Top Scorer","Best Goalkeeper","Best Defender","Fair Play"],volleyball:["Most Valuable Player","Best Spiker","Best Setter","Best Server","Best Blocker","Fair Play"],athletics:["Best Athlete","Fastest Athlete","Best Jumper","Best Thrower","Most Promising Athlete"]};
+const awardWho=w=>{const p=w.pid!=null?S.players.find(q=>q.id===w.pid):null;return p?{name:p.n,team:p.team,p}:{name:w.who,team:w.team,p:null}};
+const playerAwards=(pid,a)=>S.awards.filter(w=>w.pid===pid&&(a==null||w.a==a));
+function saveAward(x){const[a,c]=String(x.ev).split("|"),t=clean(x.t),who=clean(x.who),team=clean(x.team);
+ if(!ENT.includes(a)||!CATS.includes(c))return"Choose the sport, age group and category.";
+ if(!t)return"Type the award, for example Top Scorer.";if(!who)return"Type the winner's name.";
+ const ps=S.players.filter(p=>p.sex==c&&p.en.includes(a)&&teamKey(p.n)==teamKey(who)),p=ps.find(q=>team&&teamKey(q.team)==teamKey(team))||ps[0]||null;
+ const dup=S.awards.find(w=>w.a==a&&w.c==c&&teamKey(w.t)==teamKey(t)&&(p?w.pid===p.id:w.pid==null&&teamKey(awardWho(w).name)==teamKey(who)&&teamKey(awardWho(w).team)==teamKey(team)));
+ if(dup)return who+" already has "+t+" for "+entLabel(a)+" "+c+".";
+ S.awards.push({id:Math.max(-1,...S.awards.map(w=>w.id))+1,a,c,t,pid:p?p.id:null,who:p?p.n:who,team:p?p.team:team});return""}
+const delAward=id=>{S.awards=S.awards.filter(w=>w.id!==id)};
+function winners(){const M=new Map();S.awards.forEach(w=>{const x=awardWho(w),k=x.p?"p"+x.p.id:"n"+teamKey(x.name)+"|"+teamKey(x.team)+"|"+w.c;if(!M.has(k))M.set(k,{name:x.name,team:x.team,c:w.c,items:[]});M.get(k).items.push({id:w.id,a:w.a,t:w.t})});return[...M.values()].sort((x,y)=>x.name.localeCompare(y.name))}
+function awardsText(a){const L=S.awards.filter(w=>w.a==a);if(!L.length)return"";let o="\nAWARDS\n";CATS.forEach(c=>{const l=L.filter(w=>w.c==c).sort((x,y)=>x.t.localeCompare(y.t));if(!l.length)return;o+=`${c}\n`;l.forEach(w=>{const x=awardWho(w);o+=`  ${w.t}: ${x.name}${x.team?" ("+x.team+")":""}\n`})});return o}
+function delPlayer(id){const p=S.players.find(q=>q.id===id);if(!p)return;S.awards.forEach(w=>{if(w.pid===id){w.who=p.n;w.team=p.team;w.pid=null}});S.players=S.players.filter(q=>q.id!==id)}
+function clearPlayers(){S.players.slice().forEach(p=>delPlayer(p.id))}
+function clearRes(sp){AGES.forEach(ag=>{const x=S[sp+":"+ag];if(SP[sp].kind=="track")x.res={};else{x.r={};x.s=[];x.k={};x.tb={}}})}
+function clearAll(sp){clearRes(sp);AGES.forEach(ag=>{const x=S[sp+":"+ag];if(SP[sp].kind=="track"){x.schools=[];x.events=[]}else{x.fx=[];x.teams={}}})}
+/*END*/
+const $=id=>document.getElementById(id);
+let sport="football",age="U13",tab="m",armed="",note="";
+const evSel={};const newDraft=()=>({n:"",sex:"",dob:"",cls:"",nhis:"",team:"",en:[]});let draft=newDraft(),editId=null,flash="",regF={q:"",t:"",e:""},formSel={team:"",ev:ENT[0]+"|Girls"},awDraft={ev:ENT[0]+"|Girls",t:"",who:"",team:""},awF={q:"",e:""};
+try{const u=JSON.parse(localStorage.getItem("sportsplus1ui"));if(u){if(SP[u.sport]||u.sport=="register")sport=u.sport;if(AGES.includes(u.age))age=u.age;if(typeof u.tab=="string")tab=u.tab}}catch(e){}
+const cur=()=>sport+":"+age,kind=()=>sport=="register"?"reg":SP[sport].kind;
+const TABS={goals:[["m","Matches"],["t","Tables"],["k","Knockout"],["s","Scorers"],["p","Players"],["e","Setup"]],sets:[["m","Matches"],["t","Tables"],["k","Knockout"],["p","Players"],["e","Setup"]],track:[["m","Events"],["t","Standings"],["p","Players"],["e","Setup"]],reg:[["l","Players"],["a","Add"],["w","Awards"],["f","Form"]]};
+/* score entry shared by group cards and knockout cards */
+function entry(sp,r,h,g,dis){const v=i=>r[i]==null?"":r[i];
+ const inp=(i,l)=>`<input type="number" inputmode="numeric" min="0" data-k="${i}" value="${v(i)}" ${dis} aria-label="${l}">`;
+ const nm=(s,t,cl)=>`<span class="tm ${cl}" data-side="${s}">${esc(t)}</span>`;
+ if(SP[sp].kind=="sets")return `<div class="row">${nm("h",h,"")}<b>v</b>${nm("g",g,"r")}</div>`+[0,1,2].map(s=>`<div class="row set" data-set="${s}"><span class="cap">Set ${s+1}</span>${inp(2*s,"Home set "+(s+1))}<b>–</b>${inp(2*s+1,"Away set "+(s+1))}</div>`).join("");
+ return `<div class="row">${nm("h",h,"")}${inp(0,"Home goals")}<b>–</b>${inp(1,"Away goals")}${nm("g",g,"r")}</div><div class="pen" hidden>${SP[sp].pen}: ${inp(2,"Home shootout")} – ${inp(3,"Away shootout")}</div>`}
+function sync(card,sp,arr,ok){const x=(arr||[]).map(v=>num(v));
+ if(SP[sp].kind=="sets"){const dec=(h,g)=>h!=null&&g!=null&&h!==g,split=dec(x[0],x[1])&&dec(x[2],x[3])&&((x[0]>x[1])!=(x[2]>x[3]));card.querySelector('[data-set="2"]').hidden=!(ok&&split)}
+ else card.querySelector(".pen").hidden=!(ok&&x[0]!=null&&x[0]===x[1])}
+function status(a,id,card){const sp=sportOf(a),r=S[a].r[id]||[];sync(card,sp,r,true);
+ const x=outcome(sp,r),el=card.querySelector(".st");let m="",c="st";
+ if(x&&x.pend){m=SP[sp].kind=="sets"?"A set cannot end level":"Draw: enter the shootout score (must have a winner)";c+=" w"}
+ else if(x){const p=ptsFor(sp)[x.w];m="✓ Final · "+scoreStr(sp,r)+" · points "+p[0]+" – "+p[1];c+=" ok"}
+ if(SP[sp].scorers){const lg=logged(a,id);if(x&&!x.pend&&lg>0&&lg!==x.h+x.g){m+=" · ⚠ scorers logged "+lg+", score "+(x.h+x.g);c+=" w"}}
+ el.textContent=m;el.className=c}
+function vMatches(){const a=cur(),sp=sport,V=kind()=="sets";let h="";fx(a).forEach((f,n)=>{const r=S[a].r[f.id]||[];
+ h+=`<div class="card ${f.c}" data-i="${f.id}"><div class="meta">#${n+1} · ${age} ${f.c} · Group ${f.g}${f.rd?" · Round "+f.rd:""}</div>${entry(sp,r,f.h,f.aw,"")}<div class="st"></div></div>`});
+ const cap=V?"Enter each set score. Best of three sets: the third set appears when the sets are 1–1. Win 2 pts, loss 0.":"Enter normal-time goals. If drawn, enter the shootout score. Win 3 pts, shootout win 2, shootout loss 1.";
+ $("v").innerHTML=fx(a).length?`<p class="cap">${cap}</p>`+h:`<p class="cap">No ${SP[sp].label} ${age} matches yet. Add teams and generate fixtures in Setup.</p><button class="btn" data-t="e">Go to Setup</button>`;
+ $("v").querySelectorAll(".card").forEach(c=>status(a,+c.dataset.i,c))}
+function tbl(cat,gr){const a=cur(),V=kind()=="sets",R=table(a,cat,gr),[d,n]=groupProg(a,cat,gr),done=n>0&&d==n;
+ if(!R.length)return `<h2>${age} ${cat} · Group ${gr}</h2><p class="cap">No teams yet. Add them in Setup.</p>`;
+ const tie=i=>R[i].P>0&&((i>0&&same(a,R[i-1],R[i]))||(i<R.length-1&&same(a,R[i],R[i+1])));
+ const th=V?"<th>#</th><th>Team</th><th>P</th><th>W</th><th>L</th><th>SW</th><th>SL</th><th>PF</th><th>PA</th><th>Pts</th>":"<th>#</th><th>Team</th><th>P</th><th>W</th><th>PW</th><th>PL</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th>";
+ const td=(x,i)=>V?`<td>${x.P}</td><td>${x.W}</td><td>${x.L}</td><td>${x.GF}</td><td>${x.GA}</td><td>${x.PF}</td><td>${x.PA}</td>`:`<td>${x.P}</td><td>${x.W}</td><td>${x.PW}</td><td>${x.PL}</td><td>${x.L}</td><td>${x.GF}</td><td>${x.GA}</td><td>${x.GD>0?"+":""}${x.GD}</td>`;
+ return `<h2>${age} ${cat} · Group ${gr}<span class="prog">${d} of ${n} played</span></h2><div class="tw"><table><tr>${th}</tr>`+R.map((x,i)=>`<tr class="${done&&i<2?"q":""}"><td>${i+1}${tie(i)?"=":""}</td><td>${esc(x.t)}</td>${td(x,i)}<td><b>${x.Pts}</b></td></tr>`).join("")+"</table></div>"}
+function shareText(){const a=cur(),V=kind()=="sets";let o=head(a,"TABLES");CATS.forEach(c=>GRPS.forEach(g=>{o+=`\n${c} Group ${g}\n`;table(a,c,g).forEach((x,i)=>{o+=`${i+1}. ${x.t} P${x.P} ${V?"SD":"GD"}${x.GD>0?"+":""}${x.GD} Pts${x.Pts}\n`})}));return o}
+function shareBackup(id,text,label){return `<h2>Share</h2><textarea id="${id}" readonly>${esc(text)}</textarea><button class="btn" data-a="copy" data-for="${id}" data-done="Copied – now paste it in WhatsApp">${label}</button>
+ <h2>Backup</h2><p class="cap">Everything is saved on this phone only. Copy this backup somewhere safe; paste it back below to restore.</p><textarea id="bk">${esc(JSON.stringify(S))}</textarea><button class="btn" data-a="rest">Restore from backup box</button><p class="cap" id="bkmsg"></p>`}
+function vTables(){const V=kind()=="sets";let h=`<p class="cap">Green rows are the top two, shown once a group has played all its matches. Ranked by points, then ${V?"set difference, then rally-point difference (SW and SL are sets, PF and PA are rally points)":"goal difference, then goals scored"}. A "=" means teams are still level on all of these.</p>`;
+ CATS.forEach(c=>GRPS.forEach(g=>h+=tbl(c,g)));$("v").innerHTML=h+shareBackup("sh",shareText(),"Copy tables to share (WhatsApp)")}
+function tieHtml(cat){let h="";GRPS.forEach(g=>ties(cur(),cat,g).forEach(t=>{
+ h+=`<div class="tie">Group ${g}: <b>${esc(t.hi)}</b> and <b>${esc(t.lo)}</b> are level on every tiebreak, and they are fighting for place ${t.pos} and ${t.pos+1}. Pick who ranks higher (use head-to-head or your draw):<br>
+ <button class="sm on" data-a="tb" data-c="${cat}" data-g="${g}" data-w="${esc(t.hi)}" data-l="${esc(t.lo)}">${esc(t.hi)} higher</button><button class="sm" data-a="tb" data-c="${cat}" data-g="${g}" data-w="${esc(t.lo)}" data-l="${esc(t.hi)}">${esc(t.lo)} higher</button></div>`}));return h}
+function koCard(cat,k,B){const t=B.M[k],r=t.rec?t.rec.r:[],d=(t.h&&t.g)?"":"disabled";
+ return `<div class="card ${cat}" data-ko="${cat}|${k}"><div class="meta">${age} ${cat} · ${KN[k]}</div>${entry(sport,r,t.h||t.hl,t.g||t.gl,d)}<div class="st"></div>
+ <div class="stale" hidden>An earlier score here was for a different pairing and is not counted. <button class="sm" data-a="kdel" data-ko="${cat}|${k}">Discard it</button></div></div>`}
+function refreshKO(){const a=cur(),sp=sport,R={};CATS.forEach(c=>R[c]=ko(a,c));
+ document.querySelectorAll(".card[data-ko]").forEach(c=>{const[cat,k]=c.dataset.ko.split("|"),B=R[cat],t=B.M[k],ok=!!(t.h&&t.g),r=t.rec?t.rec.r:[];
+  const hs=c.querySelector('[data-side="h"]'),gs=c.querySelector('[data-side="g"]');hs.textContent=t.h||t.hl;gs.textContent=t.g||t.gl;hs.classList.toggle("tbd",!t.h);gs.classList.toggle("tbd",!t.g);
+  c.querySelectorAll("input").forEach(i=>{i.disabled=!ok;const v=r[+i.dataset.k];const s=v==null?"":String(v);if(document.activeElement!==i&&i.value!==s)i.value=s});
+  sync(c,sp,r,ok);c.querySelector(".stale").hidden=!t.stale;
+  const o=t.rec?outcome(sp,t.rec.r):null,el=c.querySelector(".st");let m="",cl="st";
+  if(!ok){m=B.ready?"Waiting for the earlier knockout result":"Waiting for the group matches to finish"}
+  else if(o&&o.pend){m=SP[sp].kind=="sets"?"A set cannot end level":"Level after normal time: enter the shootout score (must have a winner)";cl+=" w"}
+  else if(o){const w=o.w[0]=="H"?t.h:t.g;m="✓ Final · "+w+(k=="F"?" are champions":k=="TP"?" take third place":" go to the final")+" · "+scoreStr(sp,t.rec.r);cl+=" ok"}
+  if(SP[sp].scorers){const lg=logged(a,c.dataset.ko);if(o&&!o.pend&&lg>0&&lg!==o.h+o.g){m+=" · ⚠ scorers logged "+lg+", score "+(o.h+o.g);cl+=" w"}}
+  el.textContent=m;el.className=cl});
+ CATS.forEach(c=>{const B=R[c],e=$("champ-"+c);if(!e)return;const ch=B.win("F");
+  if(ch){const t=B.win("TP");e.hidden=false;e.textContent="Champions: "+ch+" · Runners-up: "+B.lose("F")+(t?" · Third: "+t:"")}else{e.hidden=true;e.textContent=""}});
+ const sh=$("ksh");if(sh)sh.value=koText(a)}
+function vKO(){const a=cur();let h='<p class="cap">The top two in each group go through. Semi-finals are Group A 1st v Group B 2nd and Group B 1st v Group A 2nd. A draw goes to a shootout. Fixtures fill in when both groups of a category have finished.</p>';
+ if(kind()=="sets")h=h.replace("A draw goes to a shootout. ","");
+ CATS.forEach(c=>{const B=ko(a,c),[a1,an]=groupProg(a,c,"A"),[b1,bn]=groupProg(a,c,"B");
+  h+=`<h2>${age} ${c}</h2>`+(B.ready?tieHtml(c):`<p class="cap">Group matches finished: A ${a1} of ${an}, B ${b1} of ${bn}.</p>`)+`<div class="champ" id="champ-${c}" hidden></div>`+KO_ORDER.map(k=>koCard(c,k,B)).join("")});
+ h+=`<h2>Share</h2><textarea id="ksh" readonly></textarea><button class="btn" data-a="copy" data-for="ksh" data-done="Copied – now paste it in WhatsApp">Copy knockouts to share (WhatsApp)</button>`;
+ $("v").innerHTML=h;refreshKO()}
+function topS(cat){const a=cur(),M={};S[a].s.forEach(x=>{if(mCat(a,x.m)!=cat||x.p=="Own goal")return;const k=x.p.trim().toLowerCase()+"|"+x.t;(M[k]=M[k]||{p:x.p.trim(),t:x.t,g:0}).g+=x.g});
+ const R=Object.values(M).sort((x,y)=>y.g-x.g).slice(0,10);return `<h2>${age} ${cat} · Top scorers</h2>`+(R.length?'<div class="tw"><table><tr><th>#</th><th>Player</th><th>Team</th><th>Goals</th></tr>'+R.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.p)}</td><td>${esc(x.t)}</td><td><b>${x.g}</b></td></tr>`).join("")+"</table></div>":'<p class="cap">No goals logged yet.</p>')}
+function matchTeams(m){const a=cur();if(typeof m=="number"){const f=fxById(a,m);return f?[f.h,f.aw]:[]}const[c,k]=String(m).split("|"),t=ko(a,c).M[k];return t&&t.h&&t.g?[t.h,t.g]:[]}
+function teamOpts(){$("stm").innerHTML=matchTeams(mParse($("sm").value)).map(t=>`<option>${esc(t)}</option>`).join("");fillPl()}
+function fillPl(){const a=cur(),cat=mCat(a,mParse($("sm").value)),t=$("stm").value,dl=$("dl-sc");if(dl)dl.innerHTML=S.players.filter(p=>p.sex==cat&&p.en.includes(a)&&teamKey(p.team)==teamKey(t)).map(p=>`<option value="${esc(p.n)}">`).join("")}
+function vScorers(){const a=cur();const L=S[a].s.map((x,i)=>`<div class="sc"><span>${esc(mLabel(a,x.m))} · <b>${esc(x.p)}</b> (${esc(x.t)}) · ${x.g}</span><button class="del" data-a="del" data-i="${i}" aria-label="Delete goal">×</button></div>`).join("");
+ const O=fx(a).map((f,i)=>`<option value="${f.id}">#${i+1} ${f.c}: ${esc(f.h)} v ${esc(f.aw)}</option>`);
+ CATS.forEach(c=>{const B=ko(a,c);KO_ORDER.forEach(k=>{const t=B.M[k];if(t.h&&t.g)O.push(`<option value="${c}|${k}">${c} ${KN[k]}: ${esc(t.h)} v ${esc(t.g)}</option>`)})});
+ $("v").innerHTML=`<div class="f"><select id="sm" aria-label="Match">${O.join("")}</select><select id="stm" aria-label="Team"></select>
+ <input id="sp" list="dl-sc" autocomplete="off" placeholder="Player name"><datalist id="dl-sc"></datalist><input id="sg" type="number" inputmode="numeric" min="1" value="1" aria-label="Goals"><label><input id="so" type="checkbox" style="width:auto"> Own goal (credited to the team above)</label><button class="btn" data-a="add">Add goal</button></div>`+topS("Girls")+topS("Boys")+"<h2>Goal log</h2>"+(L||'<p class="cap">Nothing logged yet.</p>');
+ teamOpts();$("sm").onchange=teamOpts;$("stm").onchange=fillPl}
+/* a button that needs a second tap before it does something destructive; key "" means no confirmation */
+const cb=(key,label,cls,attr)=>`<button class="${cls}" ${attr}${key?` data-confirm="${esc(key)}"`:""}>${key&&armed===key?"Tap again to confirm":label}</button>`;
+const copyBtns=a=>srcSports(a).map(sp=>`<button class="btn" data-a="copyteams" data-from="${sp}">Copy ${age} teams from ${SP[sp].label}</button>`).join("");
+const startOver=()=>`<h2>Start over</h2><p class="cap">Copy a backup from the ${kind()=="track"?"Standings":"Tables"} tab first. These apply to both age groups of ${SP[sport].label} only.</p>`+cb("clr","Clear all results (keep "+(kind()=="track"?"schools and events":"teams and fixtures")+")","btn",'data-a="clrres"')+cb("clrall","Clear everything ("+(kind()=="track"?"no schools or events":"empty teams and fixtures")+")","btn",'data-a="clrall"');
+const nameBox=()=>`<div class="f"><label class="cap" for="tn">Tournament name (shared by every sport)</label><input id="tn" value="${esc(S.name)}"></div>`+(note?`<p class="note">${esc(note)}</p>`:"");
+function fxTeams(){const[c,g]=($("fg").value||"|").split("|"),T=c?teamsOf(cur(),c,g):[],o=T.map(t=>`<option>${esc(t)}</option>`).join("");$("fh").innerHTML=o;$("fa").innerHTML=o;if(T.length>1)$("fa").selectedIndex=1}
+function vSetup(){const a=cur(),fl=fx(a);
+ let h=nameBox()+`<p class="cap">Setting up ${SP[sport].label} ${age}. Switch the age group above to set up the other one. Renaming a team updates its matches, tables and scorers.</p>`;
+ if(!Object.values(S[a].teams).some(L=>L.length))h+=copyBtns(a);
+ CATS.forEach(c=>GRPS.forEach(g=>{const T=teamsOf(a,c,g),nf=fl.filter(f=>f.c==c&&f.g==g).length;
+  h+=`<h2>${age} ${c} · Group ${g}<span class="prog">${T.length} teams · ${nf} matches</span></h2><div class="f">`+
+  T.map(t=>{const n=fl.filter(f=>f.c==c&&f.g==g&&(f.h==t||f.aw==t)).length;
+   return `<div class="tr"><input data-a="ren" data-c="${c}" data-g="${g}" data-old="${esc(t)}" value="${esc(t)}" aria-label="Team name"><span class="cap">${n} matches</span>`+cb("dt|"+c+"|"+g+"|"+t,"×","ic bad",`data-a="delteam" data-c="${c}" data-g="${g}" data-t="${esc(t)}" aria-label="Remove ${esc(t)}"`)+`</div>`}).join("")+
+  `<div class="tr"><input id="nt-${c}-${g}" placeholder="New team name" aria-label="New team name"><button class="sm" data-a="addteam" data-c="${c}" data-g="${g}">Add team</button></div>`+
+  (T.length>1?cb(nf?"gen|"+c+"|"+g:"",nf?"Regenerate fixtures (clears this group's results)":"Generate round-robin fixtures","btn",`data-a="gen" data-c="${c}" data-g="${g}"`):`<p class="cap">Add at least two teams to generate fixtures.</p>`)+`</div>`}));
+ h+=`<h2>${age} fixtures<span class="prog">${fl.length} matches</span></h2>`;
+ h+=fl.length?fl.map((f,i)=>{const hd=(S[a].r[f.id]||[]).some(v=>v!=="")||S[a].s.some(x=>x.m===f.id);
+  return `<div class="sc"><span>#${i+1} · <b>${f.c} ${f.g}</b> · ${esc(f.h)} v ${esc(f.aw)}${f.rd?" · R"+f.rd:""}</span><span class="acts"><button class="ic" data-a="mv" data-id="${f.id}" data-d="-1" aria-label="Move up">↑</button><button class="ic" data-a="mv" data-id="${f.id}" data-d="1" aria-label="Move down">↓</button>`+cb(hd?"df|"+f.id:"","×","ic bad",`data-a="delfx" data-id="${f.id}" aria-label="Delete match"`)+`</span></div>`}).join("")+`<button class="sm" style="margin-top:8px" data-a="sort">Sort by round</button>`:'<p class="cap">No matches yet. Add teams above and generate fixtures.</p>';
+ const pairs=[];CATS.forEach(c=>GRPS.forEach(g=>{if(teamsOf(a,c,g).length>1)pairs.push(`<option value="${c}|${g}">${c} · Group ${g}</option>`)}));
+ h+=`<h2>Add one match</h2>`+(pairs.length?`<div class="f"><select id="fg" aria-label="Group">${pairs.join("")}</select><select id="fh" aria-label="Home team"></select><select id="fa" aria-label="Away team"></select><input id="fr" type="number" min="0" inputmode="numeric" placeholder="Round (optional)" aria-label="Round"><button class="btn" data-a="addfx">Add match</button></div>`:'<p class="cap">A group needs at least two teams first.</p>');
+ $("v").innerHTML=h+startOver();if($("fg")){fxTeams();$("fg").onchange=fxTeams}}
+/* athletics views */
+function paintRanks(){const a=cur(),D=S[a],id=evSel[a],ev=aEv(a,id);if(!ev)return;const rk=rankEvent(a,ev),rows=D.res[id]||[];
+ document.querySelectorAll("[data-row]").forEach(row=>{const i=+row.dataset.row,x=rk[i],r=rows[i];if(!r)return;
+  row.querySelector("[data-rank]").textContent=x?x.place:"–";row.querySelector("[data-pts]").textContent=x?(r.sch?x.pts+" pts":"no school"):""})}
+function vAEvents(){const a=cur(),D=S[a],evs=D.events;
+ if(!evs.length){$("v").innerHTML=`<p class="cap">No ${age} athletics events yet. Add events in Setup.</p><button class="btn" data-t="e">Go to Setup</button>`;return}
+ let id=evSel[a];if(!evs.some(e=>e.id===id))id=evs[0].id;evSel[a]=id;const ev=aEv(a,id),rows=D.res[id]||[];
+ let h=`<div class="f"><select id="evs" aria-label="Event">${evs.map(e=>`<option value="${e.id}" ${e.id===id?"selected":""}>${e.c} · ${esc(e.n)}</option>`).join("")}</select></div>`;
+ h+=`<p class="cap">${ev.t=="time"?"Enter times like 12.45 or 2:05.30. The fastest ranks first.":"Enter distance or height in metres, like 4.52. The largest ranks first."} Leave the mark empty for no result. Equal marks share a place and its points.</p>`;
+ h+=rows.map((r,i)=>`<div class="ar" data-row="${i}"><div class="l1"><span class="rank" data-rank="${i}"></span><input data-f="ath" list="dl-ath" autocomplete="off" value="${esc(r.ath)}" placeholder="Athlete" aria-label="Athlete"><button class="del" data-a="delrow" data-i="${i}" aria-label="Remove athlete">×</button></div>
+  <div class="l2"><select data-f="sch" aria-label="School"><option value="">School</option>${D.schools.map(s=>`<option ${s===r.sch?"selected":""}>${esc(s)}</option>`).join("")}</select><input data-f="mk" value="${esc(r.mk)}" placeholder="${ev.t=="time"?"Time":"Metres"}" inputmode="decimal" aria-label="Mark"><span class="cap" data-pts="${i}"></span></div></div>`).join("");
+ h+=`<button class="btn" data-a="addrow">Add athlete</button>`+(rows.length>1?`<button class="sm" style="margin-top:8px" data-a="sortrows">Sort by place</button>`:"");
+ h+=`<datalist id="dl-ath">`+S.players.filter(p=>p.sex==ev.c&&p.en.includes(a)).map(p=>`<option value="${esc(p.n)}">`).join("")+"</datalist>";$("v").innerHTML=h;paintRanks();$("evs").onchange=()=>{evSel[a]=+$("evs").value;vAEvents()}}
+function aTable(cat){const a=cur(),R=standings(a,cat),[d,n]=evProg(a,cat);
+ return `<h2>${age} ${cat||"Girls and Boys combined"}<span class="prog">${d} of ${n} events scored</span></h2>`+(R.length?`<div class="tw"><table><tr><th>#</th><th>School</th><th>Pts</th><th>1st</th><th>2nd</th><th>3rd</th></tr>`+R.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.t)}</td><td><b>${x.Pts}</b></td><td>${x.G}</td><td>${x.Sv}</td><td>${x.B}</td></tr>`).join("")+"</table></div>":'<p class="cap">No schools yet. Add them in Setup.</p>')}
+function vAStand(){const a=cur();$("v").innerHTML=`<p class="cap">Points per place: ${S.pts.map((p,i)=>(i+1)+"="+p).join(", ")}. Schools are ranked by points, then 1sts, 2nds and 3rds. An athlete with no school scores nothing.</p>`+aTable("Girls")+aTable("Boys")+aTable(null)+shareBackup("sh",aText(a),"Copy standings to share (WhatsApp)")}
+function vASetup(){const a=cur(),D=S[a];
+ let h=nameBox()+`<p class="cap">Setting up Athletics ${age}. Switch the age group above to set up the other one.</p>`;
+ if(!D.schools.length)h+=copyBtns(a);
+ h+=`<h2>${age} schools<span class="prog">${D.schools.length} schools</span></h2><div class="f">`+D.schools.map(s=>`<div class="tr"><input data-a="aren" data-old="${esc(s)}" value="${esc(s)}" aria-label="School name">`+cb("ds|"+s,"×","ic bad",`data-a="adelschool" data-s="${esc(s)}" aria-label="Remove ${esc(s)}"`)+`</div>`).join("")+
+  `<div class="tr"><input id="ns" placeholder="New school name" aria-label="New school name"><button class="sm" data-a="aaddschool">Add school</button></div></div>`;
+ h+=`<h2>${age} events<span class="prog">${D.events.length} events</span></h2><div class="f">`+D.events.map(e=>{const hd=(D.res[e.id]||[]).length>0;
+  return `<div class="tr"><input data-a="aevren" data-id="${e.id}" value="${esc(e.n)}" aria-label="Event name"><span class="cap">${e.c} · ${e.t=="time"?"time":"metres"}</span>`+cb(hd?"de|"+e.id:"","×","ic bad",`data-a="adelev" data-id="${e.id}" aria-label="Remove ${esc(e.n)}"`)+`</div>`}).join("")+
+  `<div class="tr"><input id="ne" placeholder="New event, e.g. 100m" aria-label="New event name"></div><div class="tr"><select id="nec" aria-label="Category">${CATS.map(c=>`<option>${c}</option>`).join("")}</select><select id="net" aria-label="Type"><option value="time">Time (fastest wins)</option><option value="mark">Distance or height (largest wins)</option></select></div>
+  <button class="sm" data-a="aaddev">Add event</button><button class="sm" data-a="astd">Add standard events (100m to 800m, relay, jumps, shot put) for Girls and Boys</button></div>`;
+ h+=`<h2>Points per place</h2><div class="f"><label class="cap" for="ptsin">Points for 1st, 2nd, 3rd and so on (all sports use this table)</label><input id="ptsin" value="${esc(S.pts.join(", "))}"></div>`;
+ $("v").innerHTML=h+startOver()}
+const shareBox=(id,text,label)=>`<h2>Share</h2><textarea id="${id}" readonly>${esc(text)}</textarea><button class="btn" data-a="copy" data-for="${id}" data-done="Copied – now paste it in WhatsApp">${label}</button>`;
+const ageTxt=p=>{const g=ageOn(p.dob,S.regmeta.date);return g==null?"":g+" yrs"};
+const awChips=(pid,a)=>playerAwards(pid,a).map(w=>` <span class="chip aw">${esc(w.t)}</span>`).join("");
+function awBlock(a){const L=S.awards.filter(w=>w.a==a);if(!L.length)return"";
+ return `<h2>${age} awards</h2>`+CATS.map(c=>{const l=L.filter(w=>w.c==c).sort((x,y)=>x.t.localeCompare(y.t));return l.length?`<p class="cap" style="margin-bottom:2px"><b>${c}</b></p>`+l.map(w=>{const x=awardWho(w);return `<div class="sc"><span><b>${esc(w.t)}</b> · ${esc(x.name)}${x.team?" ("+esc(x.team)+")":""}</span></div>`}).join(""):""}).join("")}
+function vRoster(){const a=cur();let h=`<p class="cap">Players registered for ${SP[sport].label} ${age}. Add or edit them in Register.</p><button class="sm" data-sport="register">Open Register</button>`;
+ CATS.forEach(c=>{const R=roster(a,c),tot=R.reduce((n,x)=>n+x.list.length,0),nt=R.filter(x=>x.listed).length;
+  h+=`<h2>${age} ${c}<span class="prog">${tot} players · ${nt} ${kind()=="track"?"schools":"teams"}</span></h2>`;
+  if(!R.length)h+=`<p class="cap">No ${kind()=="track"?"schools":"teams"} yet. Add them in Setup.</p>`;
+  R.forEach(x=>{h+=`<details class="tm2" ${x.list.length?"open":""}><summary><b>${esc(x.team)}</b>${x.g?" · Group "+x.g:""}<span class="prog"${x.list.length&&x.listed?"":' style="color:var(--warn)"'}>${x.list.length?x.list.length+" players":"none registered"}${!x.listed?" · not in the "+(kind()=="track"?"school":"team")+" list":""}</span></summary>`+
+   x.list.map((p,i)=>`<div class="sc"><span>${i+1}. ${esc(p.n)}${awChips(p.id,a)}</span><span class="cap" style="margin:0">${esc(p.cls)}${p.cls&&ageTxt(p)?" · ":""}${ageTxt(p)}</span></div>`).join("")+`</details>`})});
+ $("v").innerHTML=h+awBlock(a)+shareBox("sh",rosterText(a)+awardsText(a),"Copy player list to share (WhatsApp)")}
+function plist(){const q=teamKey(regF.q),L=S.players.filter(p=>(!q||teamKey(p.n).includes(q))&&(!regF.t||teamKey(p.team)==teamKey(regF.t))&&(!regF.e||p.en.includes(regF.e))).sort((x,y)=>x.team.localeCompare(y.team)||byName(x,y));
+ if(!S.players.length)return'<p class="cap">No players registered yet. Use the Add tab.</p>';
+ return `<p class="cap">${L.length} of ${S.players.length} players shown</p>`+L.map(p=>`<div class="pl ${p.sex}"><div class="l1"><b style="flex:1;min-width:0;overflow-wrap:anywhere">${esc(p.n)}</b><button class="sm" data-a="pedit" data-id="${p.id}">Edit</button>`+cb("dp|"+p.id,"×","ic bad",`data-a="pdel" data-id="${p.id}" aria-label="Delete ${esc(p.n)}"`)+`</div><div class="meta" style="margin:4px 0 0">${esc(p.team)} · ${p.sex}${p.cls?" · "+esc(p.cls):""}${ageTxt(p)?" · "+ageTxt(p):""}${p.nhis?" · NHIS "+esc(p.nhis):""}</div><div class="chips">${p.en.map(k=>`<span class="chip">${esc(entLabel(k))}</span>`).join("")}${playerAwards(p.id).map(w=>`<span class="chip aw">${esc(w.t)} · ${esc(entLabel(w.a))}</span>`).join("")}</div></div>`).join("")}
+function paintList(){const el=$("plist");if(el)el.innerHTML=plist()}
+function vRegList(){const T=knownTeams();
+ $("v").innerHTML=(flash?`<p class="note ok">${esc(flash)}</p>`:"")+`<div class="f"><input id="rq" data-rf="q" value="${esc(regF.q)}" placeholder="Search by name" aria-label="Search by name" autocomplete="off"><select data-rf="t" aria-label="Team"><option value="">All teams</option>${T.map(t=>`<option ${t==regF.t?"selected":""}>${esc(t)}</option>`).join("")}</select><select data-rf="e" aria-label="Sport and age"><option value="">All sports and ages</option>${ENT.map(k=>`<option value="${k}" ${k==regF.e?"selected":""}>${esc(entLabel(k))}</option>`).join("")}</select></div><div id="plist">${plist()}</div>`+
+ (S.players.length?`<h2>Start over</h2><p class="cap">Registrations are part of the backup on any Tables or Standings tab. Copy one first.</p>`+cb("pclr","Delete all registered players","btn",'data-a="pclear"'):"")}
+function vRegAdd(){const T=knownTeams(),ed=editId!=null;
+ $("v").innerHTML=(note?`<p class="note">${esc(note)}</p>`:"")+(flash?`<p class="note ok">${esc(flash)}</p>`:"")+`<h2>${ed?"Edit player":"Register a player"}</h2><div class="f">
+ <label class="cap" for="pn">Full name</label><input id="pn" data-d="n" value="${esc(draft.n)}" autocomplete="off">
+ <label class="cap" for="ps">Category</label><select id="ps" data-d="sex"><option value="">Choose</option>${CATS.map(c=>`<option ${c==draft.sex?"selected":""}>${c}</option>`).join("")}</select>
+ <label class="cap" for="pd">Date of birth</label><input id="pd" type="date" data-d="dob" value="${esc(draft.dob)}">
+ <label class="cap" for="pc">Class</label><input id="pc" data-d="cls" value="${esc(draft.cls)}" placeholder="e.g. JHS 1" autocomplete="off">
+ <label class="cap" for="pi">NHIS card no.</label><input id="pi" data-d="nhis" value="${esc(draft.nhis)}" autocomplete="off">
+ <label class="cap" for="pt">Team, school or circuit</label><input id="pt" data-d="team" list="dl-team" value="${esc(draft.team)}" autocomplete="off"><datalist id="dl-team">${T.map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
+ <span class="cap">Takes part in</span><div class="opts">${ENT.map(k=>`<label><input type="checkbox" data-en="${k}" ${draft.en.includes(k)?"checked":""}> ${esc(entLabel(k))}</label>`).join("")}</div>
+ <button class="btn" data-a="padd">${ed?"Save changes":"Add player"}</button>${ed?'<button class="sm" data-a="pcancel">Cancel</button>':""}</div>
+ <p class="cap">After adding, the category, team and sports stay filled in so you can enter the next player quickly.</p>`}
+function awList(){const q=teamKey(awF.q),W=winners().map(x=>({...x,items:x.items.filter(i=>!awF.e||i.a==awF.e)})).filter(x=>x.items.length&&(!q||teamKey(x.name).includes(q)||teamKey(x.team).includes(q)));
+ if(!S.awards.length)return'<p class="cap">No awards recorded yet.</p>';
+ return `<p class="cap">${W.length} players with awards</p>`+W.map(x=>`<div class="pl ${x.c}"><b style="overflow-wrap:anywhere">${esc(x.name)}</b><div class="meta" style="margin:4px 0 0">${esc(x.team)}${x.team?" · ":""}${x.c}</div>`+x.items.map(i=>`<div class="sc"><span><b>${esc(i.t)}</b> · ${esc(entLabel(i.a))}</span>`+cb("da|"+i.id,"×","ic bad",`data-a="awdel" data-id="${i.id}" aria-label="Delete award"`)+`</div>`).join("")+`</div>`).join("")}
+function paintAw(){const el=$("awlist");if(el)el.innerHTML=awList()}
+function vRegAwards(){const[a,c]=awDraft.ev.split("|"),P=S.players.filter(p=>p.sex==c&&p.en.includes(a)).sort(byName);
+ $("v").innerHTML=(note?`<p class="note">${esc(note)}</p>`:"")+(flash?`<p class="note ok">${esc(flash)}</p>`:"")+`<h2>Record an award</h2><div class="f">
+ <select data-aw="ev" aria-label="Sport, age group and category">${ENT.flatMap(k=>CATS.map(cc=>`<option value="${k}|${cc}" ${awDraft.ev==k+"|"+cc?"selected":""}>${esc(entLabel(k))} · ${cc}</option>`)).join("")}</select>
+ <input data-aw="t" list="dl-awt" value="${esc(awDraft.t)}" placeholder="Award, e.g. Top Scorer" aria-label="Award" autocomplete="off"><datalist id="dl-awt">${AWT[sportOf(a)].map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
+ <input data-aw="who" list="dl-awp" value="${esc(awDraft.who)}" placeholder="Winner's name" aria-label="Winner's name" autocomplete="off"><datalist id="dl-awp">${P.map(p=>`<option value="${esc(p.n)}" label="${esc(p.team)}">`).join("")}</datalist>
+ <input data-aw="team" value="${esc(awDraft.team)}" placeholder="Team (if not registered)" aria-label="Team" autocomplete="off">
+ <button class="btn" data-a="awadd">Add award</button></div><p class="cap">Names suggested are the players registered for this sport, age group and category. A winner who is registered is linked to that player.</p>
+ <h2>Players with awards</h2><div class="f"><input data-af="q" value="${esc(awF.q)}" placeholder="Search by name or team" aria-label="Search" autocomplete="off"><select data-af="e" aria-label="Sport and age"><option value="">All sports and ages</option>${ENT.map(k=>`<option value="${k}" ${k==awF.e?"selected":""}>${esc(entLabel(k))}</option>`).join("")}</select></div><div id="awlist">${awList()}</div>`}
+function vRegForm(){const T=knownTeams(),m=S.regmeta;if(!formSel.team||!T.some(t=>teamKey(t)==teamKey(formSel.team)))formSel.team=T[0]||"";
+ const[a,cat]=formSel.ev.split("|"),rows=formSel.team?formRows(formSel.team,a,cat):[];
+ let h=`<div class="f"><div class="tr"><select data-rm="level" aria-label="Level"><option ${m.level=="Inter-school"?"selected":""}>Inter-school</option><option ${m.level=="Inter-circuit"?"selected":""}>Inter-circuit</option></select><input type="date" data-rm="date" value="${esc(m.date)}" aria-label="Date"></div>
+ <input data-rm="org" value="${esc(S.org)}" aria-label="Federation name">
+ <select data-fs="ev" aria-label="Event">${ENT.flatMap(k=>CATS.map(c=>`<option value="${k}|${c}" ${formSel.ev==k+"|"+c?"selected":""}>${esc(entLabel(k))} · ${c}</option>`)).join("")}</select>
+ <select data-fs="team" aria-label="Team, school or circuit">${T.map(t=>`<option ${t==formSel.team?"selected":""}>${esc(t)}</option>`).join("")}</select></div>`;
+ if(!T.length)return $("v").innerHTML=h+'<p class="cap">No teams or players yet. Register a player or add teams in a sport\'s Setup.</p>';
+ h+=`<div class="frm"><div class="hd">GHANA EDUCATION SERVICE<b>${esc(S.org.toUpperCase())}</b>REGISTRATION FORM</div><div class="ln">${m.level}${m.date?" · Date: "+fmtD(m.date):""}<br>Event: <b>${esc(entLabel(a))} ${cat}</b><br>Team/School/Circuit: <b>${esc(formSel.team)}</b></div></div>`;
+ h+=rows.length?`<div class="tw"><table><tr><th>S/N</th><th>Name</th><th>Date of birth</th><th>Age</th><th>Class</th><th>NHIS card no.</th></tr>`+rows.map((p,i)=>{const g=ageOn(p.dob,m.date);return `<tr><td>${i+1}</td><td>${esc(p.n)}</td><td>${fmtD(p.dob)}</td><td>${g==null?"":g}</td><td>${esc(p.cls)}</td><td>${esc(p.nhis)}</td></tr>`}).join("")+"</table></div>":'<p class="cap">No players registered for this team in this event yet.</p>';
+ h+=`<p class="cap">${rows.length} players. Age is worked out on the form date, or today if no date is set.</p>`;
+ $("v").innerHTML=h+shareBox("fsh",formText(formSel.team,a,cat),"Copy form to share (WhatsApp)")}
+function render(){const reg=sport=="register";$("title").textContent=S.name;
+ $("sports").innerHTML=[...SPK,"register"].map(s=>`<button data-sport="${s}" class="${s==sport?"on":""}">${s=="register"?REGL:SP[s].label}</button>`).join("");
+ $("ages").hidden=reg;$("ages").innerHTML=AGES.map(a=>`<button data-age="${a}" class="${a==age?"on":""}">${a}</button>`).join("");
+ const tabs=TABS[kind()];if(!tabs.some(x=>x[0]==tab))tab=tabs[0][0];
+ $("nav").innerHTML=tabs.map(x=>`<button data-t="${x[0]}" class="${x[0]==tab?"on":""}">${x[1]}</button>`).join("");
+ try{localStorage.setItem("sportsplus1ui",JSON.stringify({sport,age,tab}))}catch(e){}
+ const T={goals:{m:vMatches,t:vTables,k:vKO,s:vScorers,p:vRoster,e:vSetup},sets:{m:vMatches,t:vTables,k:vKO,p:vRoster,e:vSetup},track:{m:vAEvents,t:vAStand,p:vRoster,e:vASetup},reg:{l:vRegList,a:vRegAdd,w:vRegAwards,f:vRegForm}};T[kind()][tab]()}
+async function copyFrom(id,btn,done){const t=$(id);t.focus();t.select();t.setSelectionRange(0,t.value.length);let ok=false;
+ try{await navigator.clipboard.writeText(t.value);ok=true}catch(e){try{ok=document.execCommand("copy")}catch(x){}}
+ btn.textContent=ok?done:"Could not copy. The text is selected, so copy it by hand"}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const a=b.dataset.a,cf=b.dataset.confirm,c=cur();
+ if(cf&&armed!==cf){armed=cf;note="";render();return}
+ armed="";note="";flash="";
+ if(b.dataset.sport){sport=b.dataset.sport;render();scrollTo(0,0)}
+ else if(b.dataset.age){age=b.dataset.age;render()}else if(b.dataset.t){tab=b.dataset.t;render();scrollTo(0,0)}
+ else if(a=="add"){const p=$("so").checked?"Own goal":$("sp").value.trim(),g=num($("sg").value),t=$("stm").value;if(!p||!g||g<1||!t)return;
+  S[c].s.push({m:mParse($("sm").value),p,t,g});save();vScorers()}
+ else if(a=="del"){S[c].s.splice(+b.dataset.i,1);save();vScorers()}
+ else if(a=="copy"){copyFrom(b.dataset.for,b,b.dataset.done)}
+ else if(a=="rest"){let msg;try{const d=JSON.parse($("bk").value);if(d&&(d["football:U13"]||d.U13)){S=norm(d);save();msg="Restored ✓"}else msg="Backup text not valid"}catch(x){msg="Backup text not valid"}
+  render();const el=$("bkmsg");if(el)el.textContent=msg}
+ else if(a=="tb"){const k=b.dataset.c+"|"+b.dataset.g,w=b.dataset.w,l=b.dataset.l,arr=(S[c].tb[k]||[]).filter(n=>n!=w&&n!=l);arr.push(w,l);S[c].tb[k]=arr;save();render()}
+ else if(a=="kdel"){delete S[c].k[b.dataset.ko];save();refreshKO()}
+ else if(a=="addteam"){const id="nt-"+b.dataset.c+"-"+b.dataset.g;note=addTeam(c,b.dataset.c,b.dataset.g,$(id).value);save();render();if(!note){const el=$(id);if(el)el.focus()}}
+ else if(a=="delteam"){delTeam(c,b.dataset.c,b.dataset.g,b.dataset.t);save();render()}
+ else if(a=="gen"){genFx(c,b.dataset.c,b.dataset.g);save();render()}
+ else if(a=="mv"){moveFx(c,+b.dataset.id,+b.dataset.d);save();render()}
+ else if(a=="delfx"){dropFx(c,+b.dataset.id);save();render()}
+ else if(a=="sort"){sortFx(c);save();render()}
+ else if(a=="addfx"){const[cat,g]=$("fg").value.split("|");note=addFx(c,cat,g,$("fh").value,$("fa").value,num($("fr").value));save();render()}
+ else if(a=="copyteams"){copyTeams(c,b.dataset.from);save();render()}
+ else if(a=="clrres"){clearRes(sport);save();render()}
+ else if(a=="clrall"){clearAll(sport);save();render()}
+ else if(a=="addrow"){const id=evSel[c];(S[c].res[id]=S[c].res[id]||[]).push({ath:"",sch:"",mk:""});save();vAEvents();const L=document.querySelectorAll('[data-f="ath"]');if(L.length)L[L.length-1].focus()}
+ else if(a=="delrow"){S[c].res[evSel[c]].splice(+b.dataset.i,1);save();vAEvents()}
+ else if(a=="sortrows"){const id=evSel[c],rk=rankEvent(c,aEv(c,id)),rows=S[c].res[id].map((r,i)=>({r,p:rk[i]?rk[i].place:1e9,i}));rows.sort((x,y)=>x.p-y.p||x.i-y.i);S[c].res[id]=rows.map(x=>x.r);save();vAEvents()}
+ else if(a=="aaddschool"){note=aAddSchool(c,$("ns").value);save();render();if(!note){const el=$("ns");if(el)el.focus()}}
+ else if(a=="adelschool"){aDelSchool(c,b.dataset.s);save();render()}
+ else if(a=="aaddev"){note=aAddEvent(c,$("ne").value,$("nec").value,$("net").value);save();render()}
+ else if(a=="adelev"){aDelEvent(c,+b.dataset.id);save();render()}
+ else if(a=="astd"){aStdEvents(c);save();render()}
+ else if(a=="padd"){const e=savePlayer(draft,editId);if(e){note=e}else{const wasEdit=editId!=null,sv=S.players.find(x=>x.id===(wasEdit?editId:Math.max(...S.players.map(q=>q.id))));flash=(wasEdit?"Saved ":"Added ")+sv.n+(wasEdit?"":" to "+sv.team);draft.team=sv.team;
+   if(wasEdit){editId=null;draft=newDraft();tab="l"}else{draft.n="";draft.dob="";draft.nhis=""}}
+  save();render();if(!note&&tab=="a"){const el=$("pn");if(el)el.focus()}else scrollTo(0,0)}
+ else if(a=="pedit"){const p=S.players.find(x=>x.id===+b.dataset.id);if(p){draft={n:p.n,sex:p.sex,dob:p.dob,cls:p.cls,nhis:p.nhis,team:p.team,en:p.en.slice()};editId=p.id;tab="a";render();scrollTo(0,0)}}
+ else if(a=="pcancel"){editId=null;draft=newDraft();tab="l";render()}
+ else if(a=="pdel"){delPlayer(+b.dataset.id);save();render()}
+ else if(a=="pclear"){clearPlayers();save();render()}
+ else if(a=="awadd"){const e=saveAward(awDraft);if(e)note=e;else{flash="Added "+clean(awDraft.t)+" for "+clean(awDraft.who);awDraft.t="";awDraft.who="";awDraft.team=""}save();render();if(!note){const el=document.querySelector('[data-aw="t"]');if(el)el.focus()}}
+ else if(a=="awdel"){delAward(+b.dataset.id);save();render()}});
+document.addEventListener("change",e=>{const i=e.target,c=cur(),ar=i.closest(".ar");
+ if(i.dataset.aw){awDraft[i.dataset.aw]=i.value;if(i.dataset.aw=="ev")render();return}
+ if(i.dataset.af){awF[i.dataset.af]=i.value;paintAw();return}
+ if(i.dataset.en){const k=i.dataset.en;draft.en=i.checked?[...new Set([...draft.en,k])]:draft.en.filter(x=>x!=k);return}
+ if(i.dataset.d!=null){draft[i.dataset.d]=i.value;return}
+ if(i.dataset.rf){regF[i.dataset.rf]=i.value;paintList();return}
+ if(i.dataset.fs){formSel[i.dataset.fs]=i.value;render();return}
+ if(i.dataset.rm){if(i.dataset.rm=="org")S.org=clean(i.value)||ORG0;else S.regmeta[i.dataset.rm]=i.value;save();render();return}
+ if(ar&&i.dataset.f){const r=S[c].res[evSel[c]][+ar.dataset.row];if(r){r[i.dataset.f]=i.value;save();paintRanks();
+   if(i.dataset.f=="ath"&&!r.sch){const ev=aEv(c,evSel[c]),p=ev&&S.players.find(p=>p.sex==ev.c&&p.en.includes(c)&&teamKey(p.n)==teamKey(i.value)),sc=p&&S[c].schools.find(x=>teamKey(x)==teamKey(p.team));if(sc){r.sch=sc;save();vAEvents();return}}}return}
+ if(i.id=="tn"){S.name=clean(i.value)||NAME0;save();render();return}
+ if(i.id=="ptsin"){note=setPts(i.value);save();render();return}
+ if(i.dataset.a=="ren"){note=renameTeam(c,i.dataset.c,i.dataset.g,i.dataset.old,i.value);save();render()}
+ else if(i.dataset.a=="aren"){note=aRenSchool(c,i.dataset.old,i.value);save();render()}
+ else if(i.dataset.a=="aevren"){note=aRenEvent(c,+i.dataset.id,i.value);save();render()}});
+document.addEventListener("input",e=>{const i=e.target,a=cur(),ar=i.closest(".ar");
+ if(i.dataset.aw){awDraft[i.dataset.aw]=i.value;return}
+ if(i.dataset.af){awF[i.dataset.af]=i.value;paintAw();return}
+ if(i.dataset.d!=null){draft[i.dataset.d]=i.value;return}
+ if(i.dataset.rf){regF[i.dataset.rf]=i.value;paintList();return}
+ if(ar&&i.dataset.f){const r=S[a].res[evSel[a]][+ar.dataset.row];if(r){r[i.dataset.f]=i.value;save();paintRanks()}return}
+ const c=i.closest(".card");if(!c||i.dataset.k==null)return;
+ if(c.dataset.ko){const[cat,k]=c.dataset.ko.split("|"),t=ko(a,cat).M[k];if(!t.h||!t.g)return;const kk=cat+"|"+k,tk=t.h+"|"+t.g;
+  let r=S[a].k[kk];if(!r||r.t!=tk)r=S[a].k[kk]={t:tk,r:["","","","","",""]};r.r[+i.dataset.k]=i.value;save();refreshKO();return}
+ const n=+c.dataset.i,r=S[a].r[n]=S[a].r[n]||["","","","","",""];r[+i.dataset.k]=i.value;save();status(a,n,c)});
+render();
+</script>
+</body>
+</html>
