@@ -1,0 +1,8 @@
+{
+  "appId": "com.sportsplus.app",
+  "appName": "Sports Plus+",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#f5f6f8"
+  }
+}

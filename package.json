@@ -1,0 +1,17 @@
+{
+  "name": "sports-plus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sports Plus+ Android app",
+  "scripts": {
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0"
+  }
+}
